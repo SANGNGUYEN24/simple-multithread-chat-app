@@ -1,58 +1,56 @@
 package hihi.sang;
 // A Java program for a Client
-
-import java.net.*;
 import java.io.*;
+import java.net.*;
+import java.util.Scanner;
 
-import static java.lang.System.in;
+// Client class
+public class Client
+{
+    public static void main(String[] args) throws IOException
+    {
+        try
+        {
+            Scanner scanner = new Scanner(System.in);
 
-public class Client {
-    // Initialize socket and input output streams
-    private Socket socket = null;
-    // private DataInputStream input = null;
-    private BufferedReader input = null;
-    private DataOutputStream out = null;
+            // Getting localhost ip
+            InetAddress ip = InetAddress.getByName("localhost");
 
-    // Constructor to put ip address and port
-    public Client(String address, int port) {
-        // Establish a connection
-        try {
-            socket = new Socket(address, port);
-            System.out.println("Connected");
+            // Establish the connection with server port 5056
+            Socket socket = new Socket(ip, 5056);
 
-            // Takes input from terminal
-            input = new BufferedReader(new InputStreamReader(in));
+            // Obtaining input and out streams
+            DataInputStream dis = new DataInputStream(socket.getInputStream());
+            DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
 
-            // Sends output to the socket
-            out = new DataOutputStream(socket.getOutputStream());
-        } catch (IOException u) {
-            System.out.println(u);
-        }
+            // The following loop performs the exchange of information between client and client handler
+            while (true)
+            {
+                System.out.println(dis.readUTF());
+                String tosend = scanner.nextLine();
+                dos.writeUTF(tosend);
 
-        // String to read message from input
-        String line = "";
+                // If client sends exit,close this connection
+                // and then break from the while loop
+                if(tosend.equals("Exit"))
+                {
+                    System.out.println("Closing this connection : " + socket);
+                    socket.close();
+                    System.out.println("Connection closed");
+                    break;
+                }
 
-        // Keep reading until "Over" is input
-        while (!line.equals("Over")) {
-            try {
-                line = input.readLine();
-                out.writeUTF(line);
-            } catch (IOException i) {
-                System.out.println(i);
+                // printing date or time as requested by client
+                String received = dis.readUTF();
+                System.out.println(received);
             }
-        }
 
-        // Close the connection
-        try {
-            input.close();
-            out.close();
-            socket.close();
-        } catch (IOException i) {
-            System.out.println(i);
+            // closing resources
+            scanner.close();
+            dis.close();
+            dos.close();
+        }catch(Exception e){
+            e.printStackTrace();
         }
-    }
-
-    public static void main(String[] args) {
-        Client client = new Client("127.0.0.1", 5000);
     }
 }
