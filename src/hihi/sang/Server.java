@@ -25,7 +25,6 @@ public class Server {
             // Takes input from the client socket
             in = new DataInputStream(
                     new BufferedInputStream(socket.getInputStream()));
-
             String line = "";
 
             // Reads message from client until "Over" is sent
