@@ -1,56 +1,69 @@
 package hihi.sang;
 // A Java program for a Client
+
 import java.io.*;
 import java.net.*;
 import java.util.Scanner;
 
-// Client class
 public class Client
 {
-    public static void main(String[] args) throws IOException
+    final static int ServerPort = 1234;
+
+    public static void main(String[] args) throws UnknownHostException, IOException
     {
-        try
+        Scanner scn = new Scanner(System.in);
+
+        // Getting localhost ip
+        InetAddress ip = InetAddress.getByName("localhost");
+
+        // Establish the connection
+        Socket s = new Socket(ip, ServerPort);
+
+        // Obtaining input and out streams
+        DataInputStream dis = new DataInputStream(s.getInputStream());
+        DataOutputStream dos = new DataOutputStream(s.getOutputStream());
+
+        // SendMessage thread
+        Thread sendMessage = new Thread(new Runnable()
         {
-            Scanner scanner = new Scanner(System.in);
+            @Override
+            public void run() {
+                while (true) {
 
-            // Getting localhost ip
-            InetAddress ip = InetAddress.getByName("localhost");
+                    // Read the message to deliver.
+                    String msg = scn.nextLine();
 
-            // Establish the connection with server port 5056
-            Socket socket = new Socket(ip, 5056);
-
-            // Obtaining input and out streams
-            DataInputStream dis = new DataInputStream(socket.getInputStream());
-            DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
-
-            // The following loop performs the exchange of information between client and client handler
-            while (true)
-            {
-                System.out.println(dis.readUTF());
-                String tosend = scanner.nextLine();
-                dos.writeUTF(tosend);
-
-                // If client sends exit,close this connection
-                // and then break from the while loop
-                if(tosend.equals("Exit"))
-                {
-                    System.out.println("Closing this connection : " + socket);
-                    socket.close();
-                    System.out.println("Connection closed");
-                    break;
+                    try {
+                        // Write on the output stream
+                        dos.writeUTF(msg);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
-
-                // printing date or time as requested by client
-                String received = dis.readUTF();
-                System.out.println(received);
             }
+        });
 
-            // closing resources
-            scanner.close();
-            dis.close();
-            dos.close();
-        }catch(Exception e){
-            e.printStackTrace();
-        }
+        // ReadMessage thread
+        Thread readMessage = new Thread(new Runnable()
+        {
+            @Override
+            public void run() {
+
+                while (true) {
+                    try {
+                        // Read the message sent to this client
+                        String msg = dis.readUTF();
+                        System.out.println(msg);
+                    } catch (IOException e) {
+
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+
+        sendMessage.start();
+        readMessage.start();
+
     }
 }

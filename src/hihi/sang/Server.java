@@ -3,108 +3,120 @@ package hihi.sang;
 // A Java program for a Server
 
 import java.io.*;
-import java.text.*;
 import java.util.*;
 import java.net.*;
 
 // Server class
-public class Server
-{
-    public static void main(String[] args) throws IOException
-    {
-        // Server is listening on port 5056
-        ServerSocket serverSocket = new ServerSocket(5056);
+public class Server {
+
+    // Vector to store active clients
+    static Vector<ClientHandler> activeClients = new Vector<>();
+
+    // Counter for clients
+    static int i = 0;
+
+    public static void main(String[] args) throws IOException {
+        // Server is listening on port 1234
+        ServerSocket serverSocket = new ServerSocket(1234);
+
+        Socket socket;
+
         // Running infinite loop for getting client request
-        while (true)
-        {
-            Socket socket = null;
-            try
-            {
-                // Socket object to receive incoming client requests
-                socket = serverSocket.accept();
+        while (true) {
+            // Accept the incoming request
+            socket = serverSocket.accept();
 
-                System.out.println("A new client is connected : " + socket);
+            System.out.println("New client request received : " + socket);
 
-                // Obtaining input and out streams
-                DataInputStream dis = new DataInputStream(socket.getInputStream());
-                DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
+            // Obtain input and output streams
+            DataInputStream dis = new DataInputStream(socket.getInputStream());
+            DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
 
-                System.out.println("Assigning new thread for this client");
+            System.out.println("Creating a new handler for this client...");
 
-                // Create a new thread object
-                Thread thread = new ClientHandler(socket, dis, dos);
+            // Create a new handler object for handling this request.
+            ClientHandler client = new ClientHandler(socket, "client " + i, dis, dos);
 
-                // Invoking the start() method
-                thread.start();
+            // Create a new Thread with this object.
+            Thread thread = new Thread(client);
 
-            }
-            catch (Exception e){
-                socket.close();
-                e.printStackTrace();
-            }
+            System.out.println("Adding this client to active client list");
+
+            System.out.println(dis);
+            System.out.println(dos);
+            // Add this client to active clients list
+            activeClients.add(client);
+
+            // Start the thread.
+            thread.start();
+
+            // Increment i for new client.
+            // i is used for naming only, and can be replaced
+            // by any naming scheme
+            i++;
         }
     }
 }
 
 // ClientHandler class
-class ClientHandler extends Thread {
-    DateFormat fordate = new SimpleDateFormat("yyyy/MM/dd");
-    DateFormat fortime = new SimpleDateFormat("hh:mm:ss");
+class ClientHandler implements Runnable {
+    Scanner scn = new Scanner(System.in);
+    private final String name;
     final DataInputStream dis;
     final DataOutputStream dos;
-    final Socket socket;
+    Socket socket;
+    boolean isloggedin;
 
-
-    // Constructor
-    public ClientHandler(Socket socket, DataInputStream dis, DataOutputStream dos) {
-        this.socket = socket;
+    // constructor
+    public ClientHandler(Socket socket, String name,
+                         DataInputStream dis, DataOutputStream dos) {
         this.dis = dis;
         this.dos = dos;
+        this.name = name;
+        this.socket = socket;
+        this.isloggedin = true;
     }
 
     @Override
     public void run() {
+
         String received;
-        String toreturn;
         while (true) {
             try {
-                // Ask user what he wants
-                dos.writeUTF("What do you want?[Date | Time]..\n" +
-                        "Type Exit to terminate connection.");
-
-                // Receive the answer from client
+                // Receive the string
                 received = dis.readUTF();
 
-                if (received.equals("Exit")) {
-                    System.out.println("Client " + this.socket + " sends exit...");
-                    System.out.println("Closing this connection.");
+                System.out.println(received);
+
+                if (received.equals("logout")) {
+                    this.isloggedin = false;
                     this.socket.close();
-                    System.out.println("Connection closed");
                     break;
                 }
 
-                // Creating Date object
-                Date date = new Date();
+                // Break the string into message and recipient part
+                StringTokenizer st = new StringTokenizer(received, "#");
+                String MsgToSend = st.nextToken();
+                String recipient = st.nextToken();
 
-                // Write on output stream based on the answer from the client
-                switch (received) {
-                    case "Date" -> {
-                        toreturn = fordate.format(date);
-                        dos.writeUTF(toreturn);
+                // Search for the recipient in the connected devices list.
+                // [activeClients] is the vector storing client of active users
+                for (ClientHandler client : Server.activeClients) {
+                    // If the recipient is found, write on its
+                    // output stream
+                    if (client.name.equals(recipient) && client.isloggedin) {
+                        client.dos.writeUTF(this.name + " : " + MsgToSend);
+                        break;
                     }
-                    case "Time" -> {
-                        toreturn = fortime.format(date);
-                        dos.writeUTF(toreturn);
-                    }
-                    default -> dos.writeUTF("Invalid input");
                 }
             } catch (IOException e) {
+
                 e.printStackTrace();
             }
-        }
 
+        }
         try {
-            // closing resources
+            // Closing resources
             this.dis.close();
             this.dos.close();
 
