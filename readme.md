@@ -5,12 +5,13 @@ _Prerequisite: Assuming that Java JDK is installed in your OS._
 **How to run:**
 
 1. Cd to `hihi.sang` directory and run the command to activate the server class.
-
-    - java Server.java
-
+```
+java Server.java
+```
 2. Run this command to create a client:
-    - java Client.java
-
+```
+java Client.java
+```
 **When you run Server:**
 - `server = new ServerSocket(port);` is called to create a ServerSocket with port 5000.
 - ` socket = server.accept();` will wait for a client.
