@@ -41,9 +41,7 @@ public class ClientHandler implements Runnable {
                 break;
             }
         }
-
     }
-
 
     public void broadcastMessage(String messToBeSent) {
         for (ClientHandler client : clientList) {
@@ -75,7 +73,6 @@ public class ClientHandler implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
 
     public void removeClient(){
