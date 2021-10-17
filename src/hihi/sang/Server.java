@@ -43,6 +43,11 @@ public class Server {
             socket.close();
             in.close();
         } catch (IOException i) {
+            try {
+                if (socket != null) socket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             System.out.println(i);
         }
     }
