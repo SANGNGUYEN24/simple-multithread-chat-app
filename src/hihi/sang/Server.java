@@ -75,6 +75,7 @@ class ClientHandler implements Runnable {
         this.name = name;
         this.socket = socket;
         this.isloggedin = true;
+        System.out.println("ClientHandler is called");
     }
 
     @Override
@@ -104,6 +105,7 @@ class ClientHandler implements Runnable {
                 for (ClientHandler client : Server.activeClients) {
                     // If the recipient is found, write on its
                     // output stream
+                    System.out.println("Print message");
                     if (client.name.equals(recipient) && client.isloggedin) {
                         client.dos.writeUTF(this.name + " : " + MsgToSend);
                         break;

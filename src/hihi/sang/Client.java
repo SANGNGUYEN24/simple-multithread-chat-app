@@ -29,13 +29,13 @@ public class Client
             @Override
             public void run() {
                 while (true) {
-
                     // Read the message to deliver.
                     String msg = scn.nextLine();
 
                     try {
                         // Write on the output stream
                         dos.writeUTF(msg);
+                        System.out.println("sendMessage is called");
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -53,6 +53,7 @@ public class Client
                     try {
                         // Read the message sent to this client
                         String msg = dis.readUTF();
+                        System.out.println("readMessage is called");
                         System.out.println(msg);
                     } catch (IOException e) {
 
