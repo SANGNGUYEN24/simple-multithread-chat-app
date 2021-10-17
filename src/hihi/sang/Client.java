@@ -2,69 +2,87 @@ package hihi.sang;
 // A Java program for a Client
 
 import java.io.*;
-import java.net.*;
+import java.net.Socket;
 import java.util.Scanner;
 
-public class Client
-{
-    final static int ServerPort = 1234;
+import static java.lang.System.in;
 
-    public static void main(String[] args) throws UnknownHostException, IOException
-    {
-        Scanner scn = new Scanner(System.in);
+public class Client {
+    private String clientName;
+    private BufferedReader bufferedReader;
+    private BufferedWriter bufferedWriter;
+    private Socket socket;
 
-        // Getting localhost ip
-        InetAddress ip = InetAddress.getByName("localhost");
+    public Client(Socket socket, String clientName) {
+        this.clientName = clientName;
+        try {
+            this.bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            this.bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+            this.socket = socket;
+        } catch (IOException e) {
+            e.printStackTrace();
+            closeEverything(socket, bufferedWriter, bufferedReader);
+        }
+    }
 
-        // Establish the connection
-        Socket s = new Socket(ip, ServerPort);
+    public void sendMessage() {
+        try {
+            bufferedWriter.write(clientName);
+            bufferedWriter.newLine();
+            bufferedWriter.flush();
 
-        // Obtaining input and out streams
-        DataInputStream dis = new DataInputStream(s.getInputStream());
-        DataOutputStream dos = new DataOutputStream(s.getOutputStream());
-
-        // SendMessage thread
-        Thread sendMessage = new Thread(new Runnable()
-        {
-            @Override
-            public void run() {
-                while (true) {
-                    // Read the message to deliver.
-                    String msg = scn.nextLine();
-
-                    try {
-                        // Write on the output stream
-                        dos.writeUTF(msg);
-                        System.out.println("sendMessage is called");
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
+            Scanner scanner = new Scanner(in);
+            while (socket.isConnected()) {
+                String messToBeSent = scanner.nextLine();
+                bufferedWriter.write(clientName + ": " + messToBeSent);
+                bufferedWriter.newLine();
+                bufferedWriter.flush();
             }
-        });
 
-        // ReadMessage thread
-        Thread readMessage = new Thread(new Runnable()
-        {
-            @Override
-            public void run() {
+        } catch (IOException e) {
+            e.printStackTrace();
+            closeEverything(socket, bufferedWriter, bufferedReader);
+        }
+    }
 
-                while (true) {
-                    try {
-                        // Read the message sent to this client
-                        String msg = dis.readUTF();
-                        System.out.println("readMessage is called");
-                        System.out.println(msg);
-                    } catch (IOException e) {
+    public void readMessage() {
 
-                        e.printStackTrace();
-                    }
+        new Thread(() -> {
+            String messFromGroupChat;
+            try{
+                while(socket.isConnected()){
+                    messFromGroupChat = bufferedReader.readLine();
+                    System.out.println(messFromGroupChat);
                 }
+            } catch (IOException e) {
+                e.printStackTrace();
+                closeEverything(socket, bufferedWriter, bufferedReader);
             }
-        });
+        }).start();
 
-        sendMessage.start();
-        readMessage.start();
+    }
 
+    public void closeEverything(Socket socket, BufferedWriter bufferedWriter, BufferedReader bufferedReader) {
+        try {
+            if (socket != null)
+                socket.close();
+            if (bufferedWriter != null)
+                bufferedWriter.close();
+            if (bufferedReader != null)
+                bufferedReader.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void main(String[] args) throws IOException {
+        Scanner scanner = new Scanner(in);
+        System.out.println("Enter your nickname: ");
+        String clientName = scanner.nextLine();
+
+        Socket socket =  new Socket("localhost", 2001);
+        Client client = new Client(socket, clientName);
+        client.readMessage();
+        client.sendMessage();
     }
 }
