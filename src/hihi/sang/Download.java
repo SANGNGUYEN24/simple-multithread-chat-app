@@ -43,7 +43,7 @@ public class Download {
     public static void main(String[] args)
             throws IOException
     {
-        String url = "https://www.geeksforgeeks.org/";
+        String url = "https://github.com/SANGNGUYEN24/simple-multithread-chat-app/tree/download-web-page";
         DownloadWebPage(url);
     }
 }
